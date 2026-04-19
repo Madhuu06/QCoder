@@ -1,0 +1,8 @@
+node_modules/
+.qcoder/
+*.sqlite
+*.bak
+.env
+.env.*
+dist/
+build/
