@@ -41,6 +41,7 @@ const COMMANDS = [
   ['',                         ''],
   ['trust low|medium|high',    'Set the agent trust/autonomy level.'],
   ['help',                     'Show this help.'],
+  ['bye / exit / quit',        'Exit QCoder cleanly.'],
 ]
 
 export default async function help() {

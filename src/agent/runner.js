@@ -59,7 +59,7 @@ export async function runTask(task, options = {}) {
   const { recent, summary } = await buildContextWindow(sessionId, db, model)
 
   // Get a plan before starting the loop
-  const planText = await plan(enrichedTask, { model, onToken })
+  const planText = await plan(enrichedTask, { model })
 
   // Build tools
   const ignorePatterns = loadIgnorePatterns(projectPath)
@@ -94,15 +94,19 @@ async function _loop({ task, enrichedTask, systemPrompt, summary, recent, model,
   const messages = assembleMessages(systemPrompt, summary, recent)
   messages.push({ role: 'user',      content: enrichedTask })
   messages.push({ role: 'assistant', content: planText })
+  // After the plan, force the model into JSON execution mode
+  messages.push({
+    role: 'user',
+    content: 'Good. Now execute step 1. Respond with ONLY a JSON tool call — no prose, no markdown, no explanation.',
+  })
 
   let parseRetries = 0
 
   for (let step = 1; step <= maxSteps; step++) {
-    renderer.muted(`\n  [step ${step}/${maxSteps}]`)
+    renderer.spinnerTick(`Thinking... (step ${step}/${maxSteps})`)
 
-    // Call model
-    const rawResponse = await ollama.chat(model, messages, onToken)
-    renderer.token('\n')
+    // Call model silently
+    const rawResponse = await ollama.chat(model, messages, null)
 
     if (persist) _saveMessage(db, sessionId, 'assistant', rawResponse)
 
@@ -112,7 +116,8 @@ async function _loop({ task, enrichedTask, systemPrompt, summary, recent, model,
     if (parsed.type === 'retry') {
       parseRetries++
       if (parseRetries >= 3) {
-        renderer.error('  model failed to produce valid JSON after 3 attempts')
+        renderer.clearSpinner()
+        renderer.error('  ✗ Could not get a valid response from the model after 3 attempts.')
         return { success: false, summary: 'json parse failure' }
       }
       messages.push({ role: 'assistant', content: rawResponse })
@@ -123,14 +128,16 @@ async function _loop({ task, enrichedTask, systemPrompt, summary, recent, model,
 
     const { tool, args } = parsed
 
-    // done tool — exit loop
+    // done tool — clear spinner, print final answer
     if (tool === 'done') {
-      renderer.success(`\n  ✓ ${args.summary ?? 'task complete'}`)
+      renderer.clearSpinner()
+      renderer.success(`\n  ${args.summary ?? 'Task complete.'}`)
       if (persist) db.prepare('UPDATE sessions SET last_active = ? WHERE id = ?').run(Date.now(), sessionId)
       return { success: true, summary: args.summary ?? 'done' }
     }
 
-    renderer.muted(`  → ${tool}(${JSON.stringify(args)})`)
+    // Update spinner with what we're about to do
+    renderer.spinnerTick(`Running ${tool}...`)
 
     // Permission gate
     const confirmFn = askUser ?? (async (q) => {
@@ -160,22 +167,22 @@ async function _loop({ task, enrichedTask, systemPrompt, summary, recent, model,
       result = { error: err.message }
     }
 
-    // Build next message
+    // Build next message — errors shown, successes silent
     let nextMsg
     if (result && typeof result === 'object' && result.error) {
       const knownFix = checkKnownError(db, result.error)
       nextMsg = buildErrorPrompt(tool, args, result.error, 1, 3, knownFix)
-      renderer.error(`  ✗ ${result.error}`)
+      // Don't clear spinner for recoverable errors — keep trying silently
     } else {
       nextMsg = buildToolResultPrompt(tool, args, result, step, maxSteps)
-      renderer.muted(`  ✓ done`)
     }
 
     messages.push({ role: 'user', content: nextMsg })
     if (persist) _saveMessage(db, sessionId, 'user', nextMsg)
   }
 
-  renderer.warn('\n  ⚠ max steps reached — task may be incomplete')
+  renderer.clearSpinner()
+  renderer.warn('\n  ⚠ Reached the step limit — task may be incomplete.')
   return { success: false, summary: 'max steps reached' }
 }
 

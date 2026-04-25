@@ -12,8 +12,8 @@ import { saveMemory } from './save-memory.js'
  */
 export const TOOLS = [
   { name: 'read_file',   description: 'Read the contents of a file. Args: { path: string }',                                                               fn: readFile   },
-  { name: 'write_file',  description: 'Overwrite a file with new content. Args: { path: string, content: string }. Always read the file first.',           fn: writeFile  },
-  { name: 'create_file', description: 'Create a new file. Args: { path: string, content: string }',                                                        fn: createFile },
+  { name: 'write_file',  description: 'Overwrite a file with new content. Args: { path: string, content: string }. Write the COMPLETE final file content in ONE call — never call this multiple times for the same file.',           fn: writeFile  },
+  { name: 'create_file', description: 'Create a new file with its full content. Args: { path: string, content: string }. Write ALL the content in one call — never call this multiple times for the same file.',                        fn: createFile },
   { name: 'delete_file', description: 'Permanently delete a file. Args: { path: string }. Will always ask for confirmation.',                              fn: deleteFile },
   { name: 'list_files',  description: 'List all files in the project. Args: {} — no arguments needed.',                                                    fn: listFiles  },
   { name: 'run_cmd',     description: 'Run a whitelisted terminal command. Args: { command: string }. Allowed: node, npm, npx, python, git, ls, mkdir, touch.', fn: runCmd },

@@ -15,10 +15,23 @@ export function parse(raw) {
     return retry('Empty response received. Respond with a JSON tool call.')
   }
 
-  // 1. Direct parse
-  let parsed = tryParse(raw.trim())
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  const stripped = raw
+    .replace(/```[a-z]*\n?/gi, '')  // opening fence
+    .replace(/```/g, '')             // closing fence
+    .trim()
+
+  // 1. Direct parse of stripped text
+  let parsed = tryParse(stripped)
 
   // 2. Extract the outermost {...} block from prose (greedy, not lazy)
+  if (!parsed) {
+    const start = stripped.indexOf('{')
+    const end   = stripped.lastIndexOf('}')
+    if (start !== -1 && end > start) parsed = tryParse(stripped.slice(start, end + 1))
+  }
+
+  // 3. Try original raw as final fallback
   if (!parsed) {
     const start = raw.indexOf('{')
     const end   = raw.lastIndexOf('}')

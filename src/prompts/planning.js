@@ -1,16 +1,18 @@
 /**
  * Injected as the last user message before the first model response.
- * Forces the model to write a numbered plan before calling any tool.
+ * Forces the model to output ONLY a numbered list — no code, no prose.
  */
-export const PLANNING_PROMPT = `Before calling any tool, write your plan as a numbered list.
-Format exactly like this:
+export const PLANNING_PROMPT = `Output ONLY a numbered list of the steps you will take to complete this task.
 
-PLAN:
-1. [action] [target file or command]
-2. [action] [target file or command]
-...
+Rules:
+- Each step must be one short line: number, action verb, target file or tool
+- No code blocks, no commands, no markdown, no explanations
+- Do not execute anything yet — just list the steps
+- Do not ask for input or output
 
-Then immediately execute step 1 by responding with its tool call.
-After each tool result you receive, execute the next step.
-Do not add steps that were not in your original plan.
-If a result forces a change of plan, write "REVISED PLAN:" and the new list before continuing.`
+Example format:
+1. read_file src/index.js
+2. write_file src/index.js with fix applied
+3. run_cmd node --check src/index.js
+4. done`
+

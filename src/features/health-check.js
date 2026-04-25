@@ -7,8 +7,8 @@ import * as renderer             from '../terminal/renderer.js'
 /**
  * Runs on every startup. Checks 5 things:
  *   1. Ollama running
- *   2. Coding model installed (exact match)
- *   3. Embedding model installed (exact match)
+ *   2. Coding model installed (name or name:latest)
+ *   3. Embedding model installed (name or name:latest)
  *   4. Enough free RAM
  *   5. Project path configured
  *
@@ -41,7 +41,9 @@ export async function runHealthCheck(config) {
   const names = installedModels.map(m => m.name)
 
   const activeModel = config.defaultModel ?? 'qwen2.5-coder:7b'
-  const codingOk  = names.some(n => n === activeModel)
+  // Strip :latest suffix before comparing so 'model:latest' matches 'model'
+  const normalise = n => n.replace(/:latest$/, '')
+  const codingOk  = names.some(n => normalise(n) === normalise(activeModel))
   results.push({
     ok: codingOk, label: 'Coding model',
     msg: codingOk ? `${activeModel} ready` : `not found — run: ollama pull ${activeModel}`,
@@ -49,8 +51,8 @@ export async function runHealthCheck(config) {
   })
   if (!codingOk) fatalFail = true
 
-  // Exact string match — no includes()
-  const embedOk = names.some(n => n === 'nomic-embed-text')
+  // Match 'nomic-embed-text' or 'nomic-embed-text:latest' (Ollama appends :latest on pull)
+  const embedOk = names.some(n => n === 'nomic-embed-text' || n === 'nomic-embed-text:latest')
   results.push({
     ok: embedOk, label: 'Embedder',
     msg: embedOk ? 'nomic-embed-text ready' : 'not found — run: ollama pull nomic-embed-text',

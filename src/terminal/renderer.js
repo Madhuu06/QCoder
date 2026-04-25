@@ -3,7 +3,12 @@ import termKit from 'terminal-kit'
 const term = termKit.terminal
 
 // In-place progress bar instance (kept module-level so progressBar() can update it)
-let _progressBar = null
+let _progressBar  = null
+
+// Spinner state
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+let _spinnerFrame = 0
+let _spinnerActive = false
 
 // ─── Structural ────────────────────────────────────────────────────────────
 
@@ -32,6 +37,31 @@ export function plan(text)    { term.dim(`    ${text}\n`) }
 
 /** Called per token during streaming. Prints inline (no newline). */
 export function token(chunk) { term(chunk) }
+
+// ─── Spinner ───────────────────────────────────────────────────────────────
+
+/**
+ * Overwrites the current terminal line with a spinner frame + label.
+ * Call repeatedly to animate. Does NOT add a newline.
+ */
+export function spinnerTick(label = 'Working...') {
+  const frame = SPINNER_FRAMES[_spinnerFrame % SPINNER_FRAMES.length]
+  _spinnerFrame++
+  _spinnerActive = true
+  // \r returns to start of line, then overwrite with new content
+  process.stdout.write(`\r  ${frame} ${label}${' '.repeat(10)}`)
+}
+
+/**
+ * Clears the spinner line completely so the next print starts on a fresh line.
+ */
+export function clearSpinner() {
+  if (_spinnerActive) {
+    process.stdout.write('\r' + ' '.repeat(70) + '\r')
+    _spinnerActive = false
+    _spinnerFrame  = 0
+  }
+}
 
 // ─── Diff output ───────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { openDb, getConfig } from '../db/index.js'
+import { openDb, getConfig, closeDb } from '../db/index.js'
 import { watchProject }      from '../rag/watcher.js'
 import { readLine }          from './input.js'
 import { parseCommand }      from './command-parser.js'
@@ -50,6 +50,14 @@ export async function startTerminal(config) {
 
     const parsed = parseCommand(raw)
     if (!parsed) continue
+
+    // Exit commands — clean shutdown
+    if (['bye', 'exit', 'quit'].includes(parsed.cmd)) {
+      if (context.watcher) context.watcher.close()
+      closeDb()
+      renderer.success('  goodbye 👋')
+      process.exit(0)
+    }
 
     await route(parsed, context)
   }

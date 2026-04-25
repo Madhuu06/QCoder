@@ -6,9 +6,9 @@ const OPERATION_RISK = {
   list_files:  'read',
   save_memory: 'write',
   create_file: 'write',
-  write_file:  'destructive',
-  run_cmd:     'destructive',
-  delete_file: 'always_confirm', // bypasses trust level entirely
+  write_file:  'write',        // medium trust auto-approves — undo is always available
+  run_cmd:     'destructive',  // only run_cmd requires confirmation at medium trust
+  delete_file: 'always_confirm',
 }
 
 /**

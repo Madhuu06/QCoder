@@ -2,12 +2,7 @@ import * as ollama    from '../ollama/client.js'
 import * as renderer   from '../terminal/renderer.js'
 import { PLANNING_PROMPT } from '../prompts/planning.js'
 
-/**
- * Sends the task + planning prompt to the model and extracts the plan text.
- * Streams tokens to the terminal via renderer.token.
- * Returns the full raw plan text (to be prepended to conversation history).
- */
-export async function plan(enrichedTask, { model, onToken }) {
+export async function plan(enrichedTask, { model }) {
   const messages = [
     {
       role:    'user',
@@ -15,22 +10,31 @@ export async function plan(enrichedTask, { model, onToken }) {
     },
   ]
 
-  renderer.muted('\n  Planning...')
+  // Show spinner while planning
+  renderer.spinnerTick('Planning...')
+  const planTimer = setInterval(() => renderer.spinnerTick('Planning...'), 120)
 
-  const planText = await ollama.chat(model, messages, onToken ?? renderer.token)
+  const planText = await ollama.chat(model, messages, null)
 
-  // Extract and display the numbered steps
+  clearInterval(planTimer)
+  renderer.clearSpinner()
+
+  // Display only the clean numbered steps
   const planLines = planText
     .split('\n')
     .filter(l => /^\s*\d+\./.test(l))
+    .map(l => l.trim())
 
   if (planLines.length > 0) {
     renderer.divider()
     for (const line of planLines) {
-      renderer.plan(line.trim())
+      renderer.plan(line)
     }
     renderer.divider()
+  } else {
+    renderer.muted('  (proceeding without a structured plan)')
   }
 
   return planText
 }
+
