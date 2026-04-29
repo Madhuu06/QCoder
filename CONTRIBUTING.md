@@ -7,8 +7,8 @@ Thanks for taking the time to contribute. QCoder is a local-first project — co
 ## Getting Started
 
 ```bash
-git clone <repo-url> qcoder
-cd qcoder
+git clone https://github.com/Madhuu06/QCoder.git
+cd QCoder
 npm install
 npm test   # all unit tests should pass before making changes
 ```

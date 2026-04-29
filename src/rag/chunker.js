@@ -1,7 +1,12 @@
 import { parse } from 'acorn'
 import { simple } from 'acorn-walk'
 
-const SUPPORTED_AST = new Set(['.js', '.mjs', '.cjs', '.ts', '.jsx', '.tsx'])
+const SUPPORTED_AST  = new Set(['.js', '.mjs', '.cjs', '.ts', '.jsx', '.tsx'])
+// Line-based chunking is used for all other text files (including Go, Rust, Java, C, etc.)
+const SUPPORTED_TEXT = new Set([
+  '.py', '.go', '.rs', '.java', '.c', '.cpp', '.cs',
+  '.md', '.json', '.sql', '.css', '.html', '.yaml', '.toml',
+])
 
 /**
  * Splits a source file into logical chunks.
@@ -19,7 +24,12 @@ export function chunkFile(filePath, content) {
     }
   }
 
-  return chunkByLines(filePath, content)
+  // Only chunk known text formats — skip binaries and unknown extensions
+  if (SUPPORTED_TEXT.has(ext) || SUPPORTED_AST.has(ext)) {
+    return chunkByLines(filePath, content)
+  }
+
+  return []
 }
 
 function chunkByAst(filePath, content) {

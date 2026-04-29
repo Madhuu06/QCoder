@@ -1,8 +1,16 @@
 {
   "name": "qcoder",
-  "version": "0.1.0",
-  "description": "QCoder is a local-first agentic coding system built around Ollama.",
+  "version": "0.1.1",
+  "description": "QCoder is a local-first agentic coding system built around Ollama. No cloud, no subscription, no data leaving your machine.",
   "type": "module",
+  "license": "MIT",
+  "author": "Madhuu06",
+  "homepage": "https://github.com/Madhuu06/QCoder#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Madhuu06/QCoder.git"
+  },
+  "keywords": ["ai", "coding-agent", "ollama", "local-llm", "cli", "rag", "autonomous"],
   "bin": {
     "qcoder": "./bin/qcoder.js"
   },

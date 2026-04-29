@@ -52,8 +52,9 @@ export async function runTask(task, options = {}) {
   const memory     = loadMemory(projectPath)
   const systemPrompt = buildSystemPrompt({ memory, tools: TOOLS, trustLevel })
 
-  // RAG context injection
-  const enrichedTask = await buildPromptWithContext(task, projectPath, db, memory)
+  // RAG context injection (touchedFiles starts empty, grows during the loop)
+  const touchedFiles = new Set()
+  const enrichedTask = await buildPromptWithContext(task, projectPath, db, memory, touchedFiles)
 
   // Context window management
   const { recent, summary } = await buildContextWindow(sessionId, db, model)
@@ -101,6 +102,10 @@ async function _loop({ task, enrichedTask, systemPrompt, summary, recent, model,
   })
 
   let parseRetries = 0
+  // Track which files were written this task — warn (never block) on duplicate write
+  const writtenFiles = new Set()
+  // Track touched files for RAG reranker boost
+  const touchedFiles = new Set()
 
   for (let step = 1; step <= maxSteps; step++) {
     renderer.spinnerTick(`Thinking... (step ${step}/${maxSteps})`)
@@ -158,6 +163,15 @@ async function _loop({ task, enrichedTask, systemPrompt, summary, recent, model,
       const errMsg = `Unknown tool: ${tool}`
       messages.push({ role: 'user', content: errMsg })
       continue
+    }
+
+    // Warn on duplicate write — let it proceed (never block)
+    if ((tool === 'write_file' || tool === 'create_file') && args.path) {
+      if (writtenFiles.has(args.path)) {
+        renderer.spinnerTick(`Writing ${args.path} again (overwriting previous write)...`)
+      }
+      writtenFiles.add(args.path)
+      touchedFiles.add(args.path)
     }
 
     let result

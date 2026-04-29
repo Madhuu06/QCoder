@@ -27,41 +27,44 @@ QCoder is a terminal-based coding agent that gives a local LLM the tools, contex
 
 ## Installation
 
-### Step 1 — Clone and install
+### Step 1 — Clone the repo
 
 ```bash
-git clone <repo-url> qcoder
-cd qcoder
+git clone https://github.com/Madhuu06/QCoder.git
+cd QCoder
 npm install
 ```
 
-### Step 2 — Pull required Ollama models
+### Step 2 — Pull the required Ollama models
 
 ```bash
 ollama pull qwen2.5-coder:7b
 ollama pull nomic-embed-text
 ```
 
-### Step 3 — Link the CLI globally *(optional but recommended)*
+### Step 3 — Link the CLI globally
 
 ```bash
 npm link
 ```
 
-Now you can run `qcoder` from any directory.
+This makes the `qcoder` command available from any directory on your machine.
+
+> **npm registry:** `npm install -g qcoder` will be available once v0.2 is published. For now, use the clone + link path above.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Start Ollama
+# Ollama is already running in the background on Windows after install.
+# If not, start it first:
 ollama serve
 
-# Launch QCoder
+# Launch QCoder (health check runs automatically)
 qcoder
 
-# Point it at your project
+# First launch: set your project directory
 qcoder > project set /path/to/your/project
 
 # Index the project for context-aware responses
@@ -70,6 +73,8 @@ qcoder > index build
 # Start coding
 qcoder > ask "refactor the authentication module to use async/await"
 ```
+
+> **First run:** The health check warns if no project is set — this is normal. Just run `project set <path>` after launch.
 
 ---
 
@@ -135,6 +140,7 @@ Everything is stored locally in a `.qcoder/` directory inside your project.
 | `queue list` | List queued tasks and their status |
 | `queue run` | Run all pending tasks in order |
 | `queue resume` | Resume after a failed task |
+| `queue move <id> <pos>` | Move a task to a different queue position |
 | `queue remove <pos>` | Remove a pending task |
 | `queue clear` | Clear all pending tasks |
 
@@ -171,6 +177,8 @@ Everything is stored locally in a `.qcoder/` directory inside your project.
 | Command | Description |
 |---------|-------------|
 | `help` | Print the full command reference |
+| `history` | Show files touched and tasks run in this session |
+| `bye` / `exit` / `quit` | Exit QCoder cleanly |
 
 ---
 
@@ -231,7 +239,7 @@ node_modules/**, .git/**, dist/**, build/**
 
 ## RAG — Code Context
 
-QCoder indexes your project into a vector database using `nomic-embed-text`. When you run a task, it automatically retrieves the most relevant code and injects it into the prompt — so the agent understands your codebase without you having to paste files.
+QCoder indexes your project using `nomic-embed-text` embeddings stored in SQLite with cosine similarity search. When you run a task, it automatically retrieves the most relevant code chunks and injects them into the prompt — so the agent understands your codebase without you having to paste files.
 
 ```bash
 qcoder > index build          # first-time indexing
@@ -249,12 +257,18 @@ The file watcher re-indexes changed files automatically in the background.
 
 ```
 your-project/
-├── .qcoder/              ← created automatically, add to .gitignore
+├── .qcoder/              ← created automatically
 │   ├── db.sqlite         ← sessions, messages, RAG chunks, error patterns
-│   ├── memory.md         ← persistent project facts (hand-editable)
+│   ├── memory.md         ← persistent project facts (hand-editable — add your own!)
 │   ├── ignore            ← project-specific ignore patterns
 │   └── backups/          ← file backups for undo
 └── ...your code...
+```
+
+Add `.qcoder/` to your project's `.gitignore`:
+
+```bash
+echo ".qcoder/" >> .gitignore
 ```
 
 Global user config is stored at `~/.qcoder/config.json`.
@@ -283,7 +297,7 @@ UPDATE system_config SET value = '10' WHERE key = 'max_steps';
 | `max_steps` | `15` | Max tool calls per task |
 | `run_cmd_timeout_ms` | `30000` | Command timeout (30s) |
 | `rag_top_k` | `5` | Number of RAG chunks to inject |
-| `rag_similarity_threshold` | `0.5` | Minimum cosine similarity for a chunk to be included |
+| `rag_similarity_threshold` | `0.4` | Minimum cosine similarity for a chunk to be included |
 
 ---
 
@@ -308,10 +322,9 @@ node test/scenarios/create-file.js
 
 | Model | RAM needed | Good for |
 |-------|-----------|----------|
-| `qwen2.5-coder:3b` | ~3 GB | Low-end hardware, fast |
+| `qwen2.5-coder:3b` | ~3 GB | Low-end hardware, fast responses |
 | `qwen2.5-coder:7b` | ~5 GB | Daily use (recommended) |
-| `qwen2.5-coder:14b` | ~10 GB | Higher accuracy |
-| `deepseek-coder-v2:16b` | ~12 GB | Strong on complex refactors |
+| `qwen2.5-coder:14b` | ~10 GB | Higher accuracy on complex tasks |
 
 Use `model scan` to get an automatic recommendation based on your system, or `model use <name>` to switch.
 
@@ -324,7 +337,6 @@ Use `model scan` to get an automatic recommendation based on your system, or `mo
 | 4–8 GB | `qwen2.5-coder:3b` |
 | 8–16 GB | `qwen2.5-coder:7b` |
 | 16 GB+ | `qwen2.5-coder:14b` |
-| 16 GB+ with GPU | `qwen2.5-coder:32b` |
 
 ---
 

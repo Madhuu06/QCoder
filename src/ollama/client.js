@@ -1,6 +1,20 @@
 const BASE_URL = 'http://localhost:11434'
 
 /**
+ * Model options applied to every chat call.
+ * - temperature: 0.1  → near-deterministic, consistent code output
+ * - format: 'json'    → Ollama structurally enforces valid JSON responses
+ * - repeat_penalty    → prevents the model looping the same token
+ * - num_ctx           → explicit context window (Ollama default can be smaller)
+ */
+const MODEL_OPTIONS = {
+  temperature:    0.1,
+  format:         'json',
+  repeat_penalty: 1.1,
+  num_ctx:        8192,
+}
+
+/**
  * Streams a chat completion. Calls onToken(chunk) for each token received.
  * Returns the full assembled response string when the stream ends.
  */
@@ -8,7 +22,7 @@ export async function chat(model, messages, onToken = null) {
   const response = await fetch(`${BASE_URL}/api/chat`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ model, messages, stream: true }),
+    body:    JSON.stringify({ model, messages, stream: true, options: MODEL_OPTIONS }),
   })
 
   if (!response.ok) {

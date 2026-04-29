@@ -10,9 +10,11 @@ export default async function session(parsed, context) {
     const trust = getConfig('default_trust_level') ?? 'medium'
     const result = db.prepare(
       'INSERT INTO sessions (name, model, project_path, trust_level, created_at, last_active) VALUES (?,?,?,?,?,?)'
-    ).run(args[0] ?? 'session', model, context.projectPath, trust, Date.now(), Date.now())
+    ).run('__tmp__', model, context.projectPath, trust, Date.now(), Date.now())
     context.sessionId = result.lastInsertRowid
-    renderer.success(`  new session #${context.sessionId} created`)
+    const name = args[0] ?? `session-${context.sessionId}`
+    db.prepare('UPDATE sessions SET name = ? WHERE id = ?').run(name, context.sessionId)
+    renderer.success(`  new session #${context.sessionId} "${name}" created`)
     return
   }
 
