@@ -178,7 +178,44 @@ Everything is stored locally in a `.qcoder/` directory inside your project.
 |---------|-------------|
 | `help` | Print the full command reference |
 | `history` | Show files touched and tasks run in this session |
+| `sleep` | Unload model from RAM — frees memory when done for a while |
+| `wake` | Reload model into cache — fast first-token on next task |
 | `bye` / `exit` / `quit` | Exit QCoder cleanly |
+
+---
+
+## Performance (mmap / low-RAM systems)
+
+On systems where the model can't fully fit in RAM, Ollama uses `mmap` to stream weights from SSD on demand. The biggest pain point is **first-token latency** — that pause before anything appears.
+
+QCoder reduces this with two mechanisms:
+
+### Automatic pre-warming
+
+On every startup, QCoder silently sends a one-token request to Ollama immediately after the health check. This forces the model weights into the OS page cache **while you are typing your first task**. By the time you press Enter, the model is already warm.
+
+```
+qcoder starts
+  ├─ health check (1-2s)
+  ├─ prewarm fires silently in background  ← model loads from SSD here
+  └─ you type your task (~10-30s)
+        by the time you hit enter → model is warm, first token is fast
+```
+
+No configuration needed — this happens automatically.
+
+### Manual sleep / wake
+
+When you know you're done for a while, `sleep` releases the model from RAM immediately:
+
+```bash
+qcoder > sleep    ← model unloads, RAM freed
+# ... do other things ...
+qcoder > wake     ← model reloads into cache
+qcoder > ask "continue the refactor"
+```
+
+Without `sleep`, Ollama keeps the model loaded for 10 minutes after the last call (the default `keep_alive`). Use `sleep` to free RAM immediately rather than waiting for the timeout.
 
 ---
 

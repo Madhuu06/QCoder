@@ -1,6 +1,6 @@
 {
   "name": "qcoder",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "QCoder is a local-first agentic coding system built around Ollama. No cloud, no subscription, no data leaving your machine.",
   "type": "module",
   "license": "MIT",

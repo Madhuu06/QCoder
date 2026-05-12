@@ -17,6 +17,7 @@ const COMPLETIONS = [
   'errors list', 'errors clear',
   'history', 'undo', 'undo all',
   'trust low', 'trust medium', 'trust high',
+  'sleep', 'wake',
   'help', 'bye', 'exit', 'quit',
 ]
 

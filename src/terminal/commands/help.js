@@ -40,6 +40,8 @@ const COMMANDS = [
   ['undo all',                 'Undo all changes in this session.'],
   ['',                         ''],
   ['trust low|medium|high',    'Set the agent trust/autonomy level.'],
+  ['sleep',                    'Unload model from RAM — frees memory when done for a while.'],
+  ['wake',                     'Reload model into cache — fast first-token on next task.'],
   ['help',                     'Show this help.'],
   ['bye / exit / quit',        'Exit QCoder cleanly.'],
 ]

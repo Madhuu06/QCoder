@@ -7,6 +7,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [0.1.2] — 2026-05-12
+
+### Performance
+
+- **Model pre-warming** (`src/ollama/prewarmer.js`) — on every startup, QCoder fires a silent one-token request immediately after the health check. This forces model weights into the OS page cache while the user is typing their first task. First-token latency drops from 8-15s to under 1s for already-warm models. Runs fire-and-forget — never blocks the terminal.
+- **`sleep` command** — immediately unloads the model from RAM (`keep_alive: 0`). Use when done for a session and you need RAM back for other programs.
+- **`wake` command** — re-warms the model into page cache on demand. Equivalent to the startup pre-warm, callable at any time.
+- **`keep_alive` default** — pre-warm sets 10 min keep_alive. Model stays hot across multiple tasks in a session without re-fetching from SSD each time.
+
+### Documentation
+
+- Added **Performance section** to README covering mmap behaviour, pre-warming timeline diagram, and `sleep` / `wake` usage guide
+- Added `sleep` and `wake` to README command table, `help` command, and tab autocomplete
+
+---
+
 ## [0.1.1] — 2026-04-29
 
 ### Agent quality
